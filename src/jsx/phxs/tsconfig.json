@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "strict": true,
+    "types": [
+      "../global",
+      "../../../node_modules/types-for-adobe/Photoshop/2015.5",
+      "../../../node_modules/types-for-adobe/shared/PlugPlugExternalObject"
+    ]
+  },
+  "include": ["./**/*"]
+}

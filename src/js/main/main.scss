@@ -1,0 +1,313 @@
+.app {
+  color: #fff;
+  padding: 15px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+
+  .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+
+    h1, h2 {
+      font-size: 1.1rem;
+      font-weight: 300;
+      margin: 0;
+    }
+
+    .settings-btn, .back-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 4px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    .back-btn {
+      font-size: 0.9rem;
+      background: #444;
+      padding: 4px 10px;
+    }
+  }
+
+  .pickers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+
+    .picker-item {
+      text-align: left;
+
+      .picker-label {
+        font-size: 0.7rem;
+        color: #aaa;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        letter-spacing: 0.05em;
+      }
+
+      .picker-input-wrapper {
+        display: flex;
+        gap: 8px;
+
+        input {
+          flex: 1;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid #333;
+          border-radius: 4px;
+          color: #fff;
+          font-size: 0.85rem;
+          outline: none;
+        }
+
+        button {
+          padding: 6px 12px;
+          background: #333;
+          border: 1px solid #444;
+          border-radius: 4px;
+          color: #fff;
+          cursor: pointer;
+          font-size: 0.8rem;
+
+          &:hover {
+            background: #444;
+          }
+        }
+      }
+    }
+  }
+
+  .log-container {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.75rem;
+    text-align: left;
+
+    .log-entry {
+      margin-bottom: 4px;
+      line-height: 1.4;
+
+      &.info { color: #00c3ff; }
+      &.success { color: #00ff88; }
+      &.warning { color: #ffcc00; }
+      &.error { color: #ff4444; }
+    }
+  }
+
+  .footer-controls {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+
+    .checkbox-group {
+      display: flex;
+      gap: 15px;
+      color: #aaa;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+
+        &:hover {
+          color: #fff;
+        }
+      }
+    }
+
+    .print-tabs-btn {
+      background: none;
+      border: 1px solid #444;
+      color: #00c3ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+
+      &:hover {
+        border-color: #00c3ff;
+        background: rgba(0, 195, 255, 0.05);
+      }
+    }
+  }
+
+  .generate-btn {
+    margin-top: 15px;
+    padding: 14px;
+    background: #0078d4;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background: #0086ed;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+  }
+
+  // Settings specific
+  &.settings-view {
+    text-align: left;
+    overflow-y: auto;
+
+    .settings-section {
+      margin-bottom: 25px;
+
+      h3 {
+        font-size: 0.9rem;
+        color: #00c3ff;
+        margin-bottom: 12px;
+        font-weight: 400;
+      }
+
+      .mappings-table-container {
+        border: 1px solid #333;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.1);
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 12px;
+      }
+
+      .mappings-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+
+        thead {
+          background: #222;
+          position: sticky;
+          top: 0;
+
+          th {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+            color: #888;
+            font-weight: 400;
+          }
+        }
+
+        tbody td {
+          padding: 8px 10px;
+          border-bottom: 1px solid #222;
+
+          input[type="color"] {
+            width: 30px;
+            height: 20px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+          }
+
+          .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 5px;
+
+            &:hover {
+              color: #ff1111;
+            }
+          }
+        }
+      }
+
+      .mapping-form {
+        display: flex;
+        gap: 4px;
+
+        input {
+          flex: 1;
+          padding: 8px;
+          background: #000;
+          border: 1px solid #333;
+          color: #fff;
+          font-size: 0.75rem;
+          border-radius: 4px;
+          outline: none;
+
+          &:focus {
+            border-color: #0078d4;
+          }
+        }
+
+        input[type="color"] {
+          width: 36px;
+          height: 32px;
+          padding: 0;
+        }
+
+        button {
+          padding: 0 12px;
+          background: #0078d4;
+          border: none;
+          color: #fff;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1.1rem;
+
+          &:hover {
+            background: #0086ed;
+          }
+        }
+      }
+
+      textarea {
+        width: 100%;
+        height: 80px;
+        padding: 10px;
+        background: #000;
+        border: 1px solid #333;
+        border-radius: 6px;
+        color: #aaa;
+        font-size: 0.8rem;
+        font-family: inherit;
+        resize: vertical;
+        box-sizing: border-box;
+
+        &:focus {
+          border-color: #0078d4;
+          color: #fff;
+          outline: none;
+        }
+      }
+    }
+  }
+}
