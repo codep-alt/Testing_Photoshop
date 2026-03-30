@@ -22,7 +22,11 @@ const config: CEP_Config = {
   iconNormalRollOver: "./src/assets/dark-icon.png",
   parameters: ["--v=0", "--enable-nodejs", "--mixed-context"],
   width: 500,
+  minWidth: 400,
+  maxWidth: 1200,
   height: 550,
+  minHeight: 400,
+  maxHeight: 1200,
 
   panels: [
     {
@@ -31,7 +35,11 @@ const config: CEP_Config = {
       panelDisplayName: "Photoshop New", 
       autoVisible: true,
       width: 600,
+      minWidth: 400,
+      maxWidth: 1200,
       height: 650,
+      minHeight: 400,
+      maxHeight: 1200,
     },
   ],
   build: {

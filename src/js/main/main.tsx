@@ -171,53 +171,79 @@ export const App = () => {
         </header>
 
         <section className="settings-section">
-          <h3>Shop Mappings</h3>
-          <div className="mappings-table-container">
-            <table className="mappings-table">
-              <thead>
-                <tr>
-                  <th>Prefix</th>
-                  <th>Shop</th>
-                  <th>Folder</th>
-                  <th>Color</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {mappings.map((m, idx) => (
-                  <tr key={idx}>
-                    <td>{m.prefix}</td>
-                    <td>{m.shop}</td>
-                    <td>{m.folder}</td>
-                    <td>
-                      <input
-                        type="color"
-                        value={m.color}
-                        onChange={(e) => {
-                          const newMappings = mappings.map((map, i) =>
-                            i === idx ? { ...map, color: e.target.value } : map
-                          );
-                          setMappings(newMappings);
-                          saveSetting("shopMappings", newMappings);
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        className="delete-btn"
-                        onClick={() => {
-                          const newMappings = mappings.filter((_, i) => i !== idx);
-                          setMappings(newMappings);
-                          saveSetting("shopMappings", newMappings);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="section-header">
+            <h3>Shop Mappings</h3>
+            <span className="count-badge">{mappings.length}</span>
+          </div>
+          <div className="mappings-container">
+            {mappings.map((m, idx) => (
+              <div key={idx} className="mapping-card">
+                <div className="card-top">
+                  <div className="info-group">
+                    <span className="label">Prefix</span>
+                    <span className="value bold">{m.prefix}</span>
+                  </div>
+                  <div className="info-group">
+                    <span className="label">Shop</span>
+                    <span className="value">{m.shop}</span>
+                  </div>
+                  <div className="info-group">
+                    <span className="label">Color</span>
+                    <input
+                      type="color"
+                      id={`color-picker-${idx}`}
+                      style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+                      value={m.color.startsWith("#") && m.color.length === 7 ? m.color : "#0078d4"}
+                      onChange={(e) => {
+                        const newMappings = mappings.map((map, i) =>
+                          i === idx ? { ...map, color: e.target.value } : map
+                        );
+                        setMappings(newMappings);
+                        saveSetting("shopMappings", newMappings);
+                      }}
+                    />
+                    <div 
+                      className="color-preview-circle clickable" 
+                      style={{ backgroundColor: m.color }}
+                      onClick={() => document.getElementById(`color-picker-${idx}`)?.click()}
+                    />
+                  </div>
+                  <button
+                    className="delete-card-btn"
+                    onClick={() => {
+                      const newMappings = mappings.filter((_, i) => i !== idx);
+                      setMappings(newMappings);
+                      saveSetting("shopMappings", newMappings);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="card-bottom">
+                  <div className="info-group">
+                    <span className="label">Folder</span>
+                    <span className="value italic">{m.folder}</span>
+                  </div>
+                  <div className="color-control-group">
+                    <input
+                      type="text"
+                      className="hex-input"
+                      value={m.color}
+                      placeholder="#hex"
+                      spellCheck={false}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const newMappings = mappings.map((map, i) =>
+                          i === idx ? { ...map, color: val } : map
+                        );
+                        setMappings(newMappings);
+                        saveSetting("shopMappings", newMappings);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           <MappingForm
             onAdd={(m) => {
@@ -345,21 +371,42 @@ const MappingForm = ({ onAdd }: { onAdd: (m: Mapping) => void }) => {
         value={form.folder}
         onChange={(e) => setForm({ ...form, folder: e.target.value })}
       />
-      <input
-        type="color"
-        value={form.color}
-        onChange={(e) => setForm({ ...form, color: e.target.value })}
-      />
-      <button
-        onClick={() => {
-          if (form.prefix && form.shop && form.folder) {
-            onAdd(form);
-            setForm({ prefix: "", shop: "", folder: "", color: "#0078d4" });
-          }
-        }}
-      >
-        +
-      </button>
+        <div className="form-group color-group-refined">
+          <label>Color (Hex)</label>
+          <div className="color-row">
+            <input
+              type="color"
+              id="new-shop-color"
+              style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+              value={form.color.startsWith("#") && form.color.length === 7 ? form.color : "#0078d4"}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+            />
+            <div 
+              className="form-color-circle clickable" 
+              style={{ backgroundColor: form.color }}
+              onClick={() => document.getElementById("new-shop-color")?.click()}
+            />
+            <input
+              type="text"
+              className="hex-input-form"
+              value={form.color}
+              placeholder="#0078d4"
+              spellCheck={false}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+            />
+            <button
+              className="plus-btn"
+              onClick={() => {
+                if (form.prefix && form.shop && form.folder) {
+                  onAdd(form);
+                  setForm({ prefix: "", shop: "", folder: "", color: "#0078d4" });
+                }
+              }}
+            >
+              Add Shop
+            </button>
+          </div>
+        </div>
     </div>
   );
 };

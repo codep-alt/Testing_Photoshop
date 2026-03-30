@@ -1,9 +1,9 @@
 import { Order } from "../../shared/shared";
 
 const DPI = 300;
-const BORDER_TOP_MM = 2;
-const BORDER_BOTTOM_MM = 2;
-const BORDER_LEFT_MM = 10; // Slightly increased for visibility
+const BORDER_TOP_MM = 1.5; // Slightly reduced to fit more
+const BORDER_BOTTOM_MM = 1.5;
+const DEFAULT_BORDER_LEFT_MM = 10;
 const BORDER_RIGHT_MM = 1.5;
 
 const mmToPx = (mm: number, dpi: number) => {
@@ -35,8 +35,8 @@ export const generateBatch = (orders: Order[]) => {
   try {
     let pageNum = 1;
     let doc = createA4Document(pageNum, DPI);
-    let currentY = mmToPx(10, DPI);
-    const margin_px = mmToPx(5, DPI);
+    let currentY = mmToPx(8, DPI);
+    const margin_px = mmToPx(4, DPI);
     const maxPerPage = 3;
     let successfullyPlaced = 0;
 
@@ -46,10 +46,11 @@ export const generateBatch = (orders: Order[]) => {
       if (successfullyPlaced > 0 && successfullyPlaced % maxPerPage === 0) {
         pageNum++;
         doc = createA4Document(pageNum, DPI);
-        currentY = mmToPx(10, DPI);
+        currentY = mmToPx(8, DPI);
         successfullyPlaced = 0;
       }
 
+      // Calculate dynamic border height for layout (Top + Bottom + Artwork)
       const totalH_mm = order.width_mm + BORDER_TOP_MM + BORDER_BOTTOM_MM;
       const totalH_px = mmToPx(totalH_mm, DPI);
 
@@ -141,9 +142,14 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
     //@ts-ignore
     designLayer.resize((artW_px / preScaleW) * 100, (artH_px / preScaleH) * 100, AnchorPosition.TOPLEFT);
 
-    const totalW_px = artW_px + mmToPx(BORDER_LEFT_MM + BORDER_RIGHT_MM, dpi);
+    // DYNAMIC BORDER CALCULATION
+    const labelCombined = `${order.model} (${order.variant})`;
+    const isLong = labelCombined.length > 25;
+    const borderLeft_mm = isLong ? 20 : DEFAULT_BORDER_LEFT_MM;
+
+    const totalW_px = artW_px + mmToPx(borderLeft_mm + BORDER_RIGHT_MM, dpi);
     const xStart = (Number(doc.width) - totalW_px) / 2;
-    const xArtworkStart = xStart + mmToPx(BORDER_LEFT_MM, dpi);
+    const xArtworkStart = xStart + mmToPx(borderLeft_mm, dpi);
     const yArtworkStart = yOffset + mmToPx(BORDER_TOP_MM, dpi);
 
     designLayer.translate(
@@ -156,8 +162,8 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
       designLayer.resize(100, -100, AnchorPosition.MIDDLECENTER);
     }
 
-    addExternalBorder(doc, designLayer, order.borderColor);
-    addLabels(doc, designLayer, order);
+    addExternalBorder(doc, designLayer, order.borderColor, borderLeft_mm);
+    addLabels(doc, designLayer, order, borderLeft_mm);
 
     return designLayer;
   } catch (e) {
@@ -166,12 +172,12 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
   }
 };
 
-const addExternalBorder = (doc: any, layer: any, hexColor: string) => {
+const addExternalBorder = (doc: any, layer: any, hexColor: string, borderLeft_mm: number) => {
   try {
     const b = layer.bounds;
     const top_px = mmToPx(BORDER_TOP_MM, DPI);
     const bottom_px = mmToPx(BORDER_BOTTOM_MM, DPI);
-    const left_px = mmToPx(BORDER_LEFT_MM, DPI);
+    const left_px = mmToPx(borderLeft_mm, DPI);
     const right_px = mmToPx(BORDER_RIGHT_MM, DPI);
 
     const borderRegion = [
@@ -201,16 +207,34 @@ const addExternalBorder = (doc: any, layer: any, hexColor: string) => {
   }
 };
 
-const addLabels = (doc: any, layer: any, order: Order) => {
+const addLabels = (doc: any, layer: any, order: Order, borderLeft_mm: number) => {
   try {
     const bDesign = layer.bounds;
     const designY_Center = (Number(bDesign[1]) + Number(bDesign[3])) / 2;
-    const leftBorderCenter = Number(bDesign[0]) - mmToPx(BORDER_LEFT_MM, DPI) / 2;
+    const borderLeftEdge = Number(bDesign[0]) - mmToPx(borderLeft_mm, DPI);
+    const borderCenterX = borderLeftEdge + mmToPx(borderLeft_mm, DPI) / 2;
 
-    // Model + Variant + Design label, centered in the left border strip
-    const labelText = `${order.model} (${order.variant}) - ${order.design}`;
-    const labelLayer = createLabelLayer(doc, labelText, 14);
-    positionLabel(labelLayer, leftBorderCenter, designY_Center);
+    const labelFull = `${order.model} (${order.variant})`;
+    const isLong = labelFull.length > 25;
+
+    if (isLong) {
+      // Create two lines: Model and (Variant)
+      const line1 = order.model;
+      const line2 = `(${order.variant})`;
+      
+      const layer1 = createLabelLayer(doc, line1, 14);
+      const layer2 = createLabelLayer(doc, line2, 14);
+
+      // Position side-by-side (vertically stacked since rotated)
+      // Offset by 3.5mm left/right of the border center for balanced spacing
+      const offsetX = mmToPx(3.5, DPI);
+      positionLabel(layer1, borderCenterX - offsetX, designY_Center);
+      positionLabel(layer2, borderCenterX + offsetX, designY_Center);
+    } else {
+      // Single line
+      const labelLayer = createLabelLayer(doc, labelFull, 14);
+      positionLabel(labelLayer, borderCenterX, designY_Center);
+    }
   } catch (e) {
     // Ignore label errors
   }
