@@ -209,7 +209,7 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
     doc.selection.clear();
     doc.selection.deselect();
 
-    addExternalBorder(doc, designLayer, order.borderColor, borderLeft_mm);
+    addExternalBorder(doc, designLayer, order.borderColor, borderLeft_mm, xArtworkStart, yArtworkStart, artW_px, artH_px);
     addLabels(doc, designLayer, order, borderLeft_mm);
 
     return designLayer;
@@ -219,20 +219,18 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
   }
 };
 
-const addExternalBorder = (doc: any, layer: any, hexColor: string, borderLeft_mm: number) => {
+const addExternalBorder = (doc: any, layer: any, hexColor: string, borderLeft_mm: number, x: number, y: number, w: number, h: number) => {
   try {
-    const b = layer.bounds;
-    // Note: We use actual layer bounds, but since we cropped, they match artW/artH
     const top_px = mmToPx(BORDER_TOP_MM, DPI);
     const bottom_px = mmToPx(BORDER_BOTTOM_MM, DPI);
     const left_px = mmToPx(borderLeft_mm, DPI);
     const right_px = mmToPx(BORDER_RIGHT_MM, DPI);
 
     const borderRegion = [
-      [Number(b[0]) - left_px, Number(b[1]) - top_px],
-      [Number(b[2]) + right_px, Number(b[1]) - top_px],
-      [Number(b[2]) + right_px, Number(b[3]) + bottom_px],
-      [Number(b[0]) - left_px, Number(b[3]) + bottom_px],
+      [x - left_px, y - top_px],
+      [x + w + right_px, y - top_px],
+      [x + w + right_px, y + h + bottom_px],
+      [x - left_px, y + h + bottom_px],
     ];
 
     const selectionLayer = doc.artLayers.add();
@@ -241,12 +239,30 @@ const addExternalBorder = (doc: any, layer: any, hexColor: string, borderLeft_mm
     selectionLayer.move(layer, ElementPlacement.PLACEAFTER);
     doc.selection.select(borderRegion);
 
+    // Robust hex to RGB conversion
     const hex = (hexColor || "#0078d4").replace("#", "");
+    let r = 0, g = 120, b = 212; // Default blue
+
+    if (hex.length === 6) {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    } else if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    }
+
+    // Shield against NaN (invalid input like "INV" being typed into the field)
+    if (isNaN(r) || isNaN(g) || isNaN(b)) {
+      r = 0; g = 120; b = 212;
+    }
+
     //@ts-ignore
     const color = new SolidColor();
-    color.rgb.red = parseInt(hex.substring(0, 2), 16);
-    color.rgb.green = parseInt(hex.substring(2, 4), 16);
-    color.rgb.blue = parseInt(hex.substring(4, 6), 16);
+    color.rgb.red = r;
+    color.rgb.green = g;
+    color.rgb.blue = b;
 
     doc.selection.fill(color);
     doc.selection.deselect();
