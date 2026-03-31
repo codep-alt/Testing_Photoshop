@@ -115,7 +115,7 @@ export async function auditOrders(
         imagePath: imagePath,
         width_mm: dim.width,
         length_mm: dim.length,
-        mirror: dim.mirror || false,
+        mirror: variantRawValue.toLowerCase().includes("glass"),
         borderColor: mapping.color,
       });
     }
@@ -152,7 +152,6 @@ function processRawRows(rows: any[][]): Dimension[] {
       variant: (getVal("variant") || "").toString().trim(),
       width: parseFloat((getVal("width") || "0").toString()) || 0,
       length: parseFloat((getVal("length") || "0").toString()) || 0,
-      mirror: (getVal("mirror") || "").toString().toLowerCase() === "yes" || getVal("mirror") === true,
     };
   }).filter(d => d.model && d.width > 0);
 }
