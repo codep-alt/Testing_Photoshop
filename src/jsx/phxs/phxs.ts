@@ -124,25 +124,40 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
 
     doc.activeLayer = designLayer;
 
+    // Target (Artwork) dimensions
     const artW_px = mmToPx(order.length_mm, dpi);
     const artH_px = mmToPx(order.width_mm, dpi);
 
-    const origW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
-    const origH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
+    let preRotateW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
+    let preRotateH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
 
     // Auto-rotate if image is portrait
-    if (origH > origW) {
+    if (preRotateH > preRotateW) {
       //@ts-ignore
       designLayer.rotate(90, AnchorPosition.MIDDLECENTER);
     }
 
-    const preScaleW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
-    const preScaleH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
+    const currentImageW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
+    const currentImageH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
 
+    // CALCULATE FILL & CROP RATIO
+    const targetRatio = artW_px / artH_px;
+    const imageRatio = currentImageW / currentImageH;
+
+    let scaleFactorPercent = 100;
+    if (imageRatio > targetRatio) {
+      // Image is wider than target area. Fill based on height.
+      scaleFactorPercent = (artH_px / currentImageH) * 100;
+    } else {
+      // Image is taller or perfectly matched. Fill based on width.
+      scaleFactorPercent = (artW_px / currentImageW) * 100;
+    }
+
+    // Proportional resize (Cover logic)
     //@ts-ignore
-    designLayer.resize((artW_px / preScaleW) * 100, (artH_px / preScaleH) * 100, AnchorPosition.TOPLEFT);
+    designLayer.resize(scaleFactorPercent, scaleFactorPercent, AnchorPosition.TOPLEFT);
 
-    // DYNAMIC BORDER CALCULATION
+    // BORDER CALCULATION
     const labelCombined = `${order.model} (${order.variant})`;
     const isLong = labelCombined.length > 25;
     const borderLeft_mm = isLong ? 20 : DEFAULT_BORDER_LEFT_MM;
@@ -152,15 +167,39 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
     const xArtworkStart = xStart + mmToPx(borderLeft_mm, dpi);
     const yArtworkStart = yOffset + mmToPx(BORDER_TOP_MM, dpi);
 
-    designLayer.translate(
-      Math.round(xArtworkStart - Number(designLayer.bounds[0])),
-      Math.round(yArtworkStart - Number(designLayer.bounds[1]))
-    );
+    // Final dimensions after scaling
+    const scaledW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
+    const scaledH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
 
+    // POSITIONING
+    // X: Align Left (protect logo)
+    const targetTranslateX = xArtworkStart - Number(designLayer.bounds[0]);
+    
+    // Y: Center Vertically (distribute height overflow equally)
+    const yOverflow = scaledH - artH_px;
+    const targetTranslateY = (yArtworkStart - (yOverflow / 2)) - Number(designLayer.bounds[1]);
+
+    designLayer.translate(Math.round(targetTranslateX), Math.round(targetTranslateY));
+
+    // MIRROR IF REQUESTED
     if (order.mirror) {
       //@ts-ignore
       designLayer.resize(100, -100, AnchorPosition.MIDDLECENTER);
     }
+
+    // HARD CROP TO FRAME (selection based)
+    // Select the target rectangle and invert to clear everything else for this layer
+    const cropRegion = [
+      [xArtworkStart, yArtworkStart],
+      [xArtworkStart + artW_px, yArtworkStart],
+      [xArtworkStart + artW_px, yArtworkStart + artH_px],
+      [xArtworkStart, yArtworkStart + artH_px]
+    ];
+    
+    doc.selection.select(cropRegion);
+    doc.selection.invert();
+    doc.selection.clear();
+    doc.selection.deselect();
 
     addExternalBorder(doc, designLayer, order.borderColor, borderLeft_mm);
     addLabels(doc, designLayer, order, borderLeft_mm);
@@ -175,6 +214,7 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
 const addExternalBorder = (doc: any, layer: any, hexColor: string, borderLeft_mm: number) => {
   try {
     const b = layer.bounds;
+    // Note: We use actual layer bounds, but since we cropped, they match artW/artH
     const top_px = mmToPx(BORDER_TOP_MM, DPI);
     const bottom_px = mmToPx(BORDER_BOTTOM_MM, DPI);
     const left_px = mmToPx(borderLeft_mm, DPI);
