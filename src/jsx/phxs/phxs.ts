@@ -167,25 +167,33 @@ const placeOrderDesign = (doc: any, order: Order, yOffset: number, dpi: number) 
     const xArtworkStart = xStart + mmToPx(borderLeft_mm, dpi);
     const yArtworkStart = yOffset + mmToPx(BORDER_TOP_MM, dpi);
 
-    // Final dimensions after scaling
-    const scaledW = Number(designLayer.bounds[2]) - Number(designLayer.bounds[0]);
-    const scaledH = Number(designLayer.bounds[3]) - Number(designLayer.bounds[1]);
-
     // POSITIONING
-    // X: Align Left (protect logo)
-    const targetTranslateX = xArtworkStart - Number(designLayer.bounds[0]);
+    // MIRROR IF REQUESTED (Horizontal Mirror for logo flip)
+    if (order.mirror) {
+      //@ts-ignore
+      designLayer.resize(-100, 100, AnchorPosition.MIDDLECENTER);
+    }
+
+    // Capture bounds relative to current state
+    const scaledBounds = designLayer.bounds;
+    const scaledW = Number(scaledBounds[2]) - Number(scaledBounds[0]);
+    const scaledH = Number(scaledBounds[3]) - Number(scaledBounds[1]);
+
+    // X: Align Left (protect logo) OR Right (protect flipped logo)
+    let targetX_px = xArtworkStart;
+    if (order.mirror) {
+      // Mirror means logo is now on the right, so anchor to the right edge
+      const xArtworkEnd = xArtworkStart + artW_px;
+      targetX_px = xArtworkEnd - scaledW;
+    }
+    
+    const targetTranslateX = targetX_px - Number(scaledBounds[0]);
     
     // Y: Center Vertically (distribute height overflow equally)
     const yOverflow = scaledH - artH_px;
-    const targetTranslateY = (yArtworkStart - (yOverflow / 2)) - Number(designLayer.bounds[1]);
+    const targetTranslateY = (yArtworkStart - (yOverflow / 2)) - Number(scaledBounds[1]);
 
     designLayer.translate(Math.round(targetTranslateX), Math.round(targetTranslateY));
-
-    // MIRROR IF REQUESTED
-    if (order.mirror) {
-      //@ts-ignore
-      designLayer.resize(100, -100, AnchorPosition.MIDDLECENTER);
-    }
 
     // HARD CROP TO FRAME (selection based)
     // Select the target rectangle and invert to clear everything else for this layer
